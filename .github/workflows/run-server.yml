@@ -51,6 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -f playit-data/playitd.sock
+          : > playit-data/playitd.log
           setsid nohup ./playit \
             --socket-path "$PWD/playit-data/playitd.sock" \
             --secret-path "$PWD/playit-data/playit.toml" \
@@ -59,10 +60,18 @@ jobs:
           echo "playitd started"
 
           # Give the agent time to register with the network.
-          sleep 15
+          sleep 20
           ./playit-cli --socket-path "$PWD/playit-data/playitd.sock" status || true
           echo "--- playitd.log ---"
-          tail -n 30 playit-data/playitd.log || true
+          tail -n 40 playit-data/playitd.log || true
+
+          # IPv6 ping failures on GitHub runners are expected; the agent
+          # falls back to IPv4. Only treat "never connected" as an error.
+          if ! grep -q "playit connected" playit-data/playitd.log; then
+            echo "::error::playit agent did not connect - see playitd.log above"
+            exit 1
+          fi
+          grep "playit connected" playit-data/playitd.log
 
       - name: Run server
         env:
