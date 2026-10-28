@@ -73,6 +73,30 @@ jobs:
           fi
           grep "playit connected" playit-data/playitd.log
 
+      - name: Show tunnel address
+        run: |
+          python3 - <<'PY'
+          import json, os, socket
+          sock = os.path.abspath("playit-data/playitd.sock")
+          s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+          s.settimeout(5)
+          s.connect(sock)
+          f = s.makefile("rwb")
+          f.readline()  # hello
+          req = {"ipc_version": 2, "request_id": 1, "request": {"type": "get_state"}}
+          f.write((json.dumps(req) + "\n").encode()); f.flush()
+          reply = json.loads(f.readline())
+          agent = reply["data"]["response"]["data"]["data"]
+          if not agent["tunnels"]:
+              print("::warning::No tunnels configured on this agent")
+          for t in agent["tunnels"]:
+              line = f"Tunnel {t['display_address']} -> {t['destination']} (disabled={t['is_disabled']})"
+              print(line)
+              print(f"::notice::{line}")
+              with open(os.environ.get("GITHUB_STEP_SUMMARY", "/dev/null"), "a") as out:
+                  out.write(f"- {line}\n")
+          PY
+
       - name: Run server
         env:
           DURATION_MINUTES: ${{ inputs.duration_minutes }}
@@ -114,6 +138,15 @@ jobs:
           fi
 
           echo "Server is up. Keeping it online for ${DURATION_MINUTES} minutes."
+
+          # Confirm the playit tunnel's local destination is actually reachable.
+          if timeout 5 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/25565'; then
+            echo "Port 25565 is listening - playit tunnel destination is reachable."
+          else
+            echo "::error::Nothing is listening on 127.0.0.1:25565. Check server.properties (server-port) and your playit tunnel destination."
+            exit 1
+          fi
+
           sleep $(( DURATION_MINUTES * 60 ))
 
           echo "Stopping server..."
