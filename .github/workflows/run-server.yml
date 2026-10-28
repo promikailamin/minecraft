@@ -51,12 +51,12 @@ jobs:
         run: |
           set -euo pipefail
           rm -f playit-data/playitd.sock
-          ./playit \
+          setsid nohup ./playit \
             --socket-path "$PWD/playit-data/playitd.sock" \
             --secret-path "$PWD/playit-data/playit.toml" \
             --log-path "$PWD/playit-data/playitd.log" \
-            > playit-data/playitd.out 2>&1 &
-          echo "playitd pid: $!"
+            > playit-data/playitd.out 2>&1 < /dev/null &
+          echo "playitd started"
 
           # Give the agent time to register with the network.
           sleep 15
