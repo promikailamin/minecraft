@@ -17,3 +17,23 @@
 2026-10-28T10:41:46.997913Z ERROR playit_agent_core::agent_control::address_selector: failed to ping tunnel server
 2026-10-28T10:41:47.335436Z ERROR playit_agent_core::agent_control: failed to sign and register error=Fail(AgentDisabledOverLimit)
 2026-10-28T10:41:47.335536Z  WARN playitd::daemon: agent disabled because the account is over the agent limit error=ApiFail("\"AgentDisabledOverLimit\"")
+2026-10-28T10:42:17.952408Z ERROR playit_agent_core::agent_control::address_selector: failed to send initial ping error=Os { code: 101, kind: NetworkUnreachable, message: "Network unreachable" } addr=[2602:fbaf:810::1]:5525
+2026-10-28T10:42:17.952431Z ERROR playit_agent_core::agent_control::address_selector: failed to ping tunnel server
+2026-10-28T10:42:18.284363Z ERROR playit_agent_core::agent_control: failed to sign and register error=Fail(AgentDisabledOverLimit)
+2026-10-28T10:42:18.284458Z  WARN playitd::daemon: agent disabled because the account is over the agent limit error=ApiFail("\"AgentDisabledOverLimit\"")
+2026-10-28T10:42:48.907747Z ERROR playit_agent_core::agent_control::address_selector: failed to send initial ping error=Os { code: 101, kind: NetworkUnreachable, message: "Network unreachable" } addr=[2602:fbaf:810::1]:5525
+2026-10-28T10:42:48.907773Z ERROR playit_agent_core::agent_control::address_selector: failed to ping tunnel server
+2026-10-28T10:42:49.241428Z ERROR playit_agent_core::agent_control: failed to sign and register error=Fail(AgentDisabledOverLimit)
+2026-10-28T10:42:49.241526Z  WARN playitd::daemon: agent disabled because the account is over the agent limit error=ApiFail("\"AgentDisabledOverLimit\"")
+2026-10-28T10:43:19.859302Z ERROR playit_agent_core::agent_control::address_selector: failed to send initial ping error=Os { code: 101, kind: NetworkUnreachable, message: "Network unreachable" } addr=[2602:fbaf:810::1]:5525
+2026-10-28T10:43:19.859330Z ERROR playit_agent_core::agent_control::address_selector: failed to ping tunnel server
+2026-10-28T10:43:20.225413Z ERROR playit_agent_core::agent_control: failed to sign and register error=Fail(AgentDisabledOverLimit)
+2026-10-28T10:43:20.225527Z  WARN playitd::daemon: agent disabled because the account is over the agent limit error=ApiFail("\"AgentDisabledOverLimit\"")
+2026-10-28T10:43:50.853643Z ERROR playit_agent_core::agent_control::address_selector: failed to send initial ping error=Os { code: 101, kind: NetworkUnreachable, message: "Network unreachable" } addr=[2602:fbaf:810::1]:5525
+2026-10-28T10:43:50.853673Z ERROR playit_agent_core::agent_control::address_selector: failed to ping tunnel server
+2026-10-28T10:43:51.189997Z ERROR playit_agent_core::agent_control: failed to sign and register error=Fail(AgentDisabledOverLimit)
+2026-10-28T10:43:51.190326Z  WARN playitd::daemon: agent disabled because the account is over the agent limit error=ApiFail("\"AgentDisabledOverLimit\"")
+2026-10-28T10:44:21.828587Z ERROR playit_agent_core::agent_control::address_selector: failed to send initial ping error=Os { code: 101, kind: NetworkUnreachable, message: "Network unreachable" } addr=[2602:fbaf:810::1]:5525
+2026-10-28T10:44:21.828605Z ERROR playit_agent_core::agent_control::address_selector: failed to ping tunnel server
+2026-10-28T10:44:22.204137Z ERROR playit_agent_core::agent_control: failed to sign and register error=Fail(AgentDisabledOverLimit)
+2026-10-28T10:44:22.204226Z  WARN playitd::daemon: agent disabled because the account is over the agent limit error=ApiFail("\"AgentDisabledOverLimit\"")

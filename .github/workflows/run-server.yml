@@ -1,0 +1,135 @@
+name: Run Minecraft Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration_minutes:
+        description: "How long to keep the server online (max 350)"
+        required: true
+        default: "350"
+      memory:
+        description: "Max JVM heap for the server (e.g. 4G)"
+        required: true
+        default: "4G"
+
+# Only one server at a time; a second dispatch waits instead of fighting
+# over the same playit agent / world state.
+concurrency:
+  group: minecraft-server
+  cancel-in-progress: false
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore world
+        uses: actions/cache@v4
+        with:
+          path: world
+          key: world-${{ github.run_id }}
+          restore-keys: |
+            world-
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Prepare agent
+        run: |
+          chmod +x playit playit-cli playit-start.sh
+          chmod 600 playit-data/playit.toml
+          ./playit-cli version || true
+
+      - name: Start playit.gg agent
+        run: |
+          set -euo pipefail
+          rm -f playit-data/playitd.sock
+          ./playit \
+            --socket-path "$PWD/playit-data/playitd.sock" \
+            --secret-path "$PWD/playit-data/playit.toml" \
+            --log-path "$PWD/playit-data/playitd.log" \
+            > playit-data/playitd.out 2>&1 &
+          echo "playitd pid: $!"
+
+          # Give the agent time to register with the network.
+          sleep 15
+          ./playit-cli --socket-path "$PWD/playit-data/playitd.sock" status || true
+          echo "--- playitd.log ---"
+          tail -n 30 playit-data/playitd.log || true
+
+      - name: Run server
+        env:
+          DURATION_MINUTES: ${{ inputs.duration_minutes }}
+          MAX_MEMORY: ${{ inputs.memory }}
+        run: |
+          set -euo pipefail
+
+          # Console FIFO so we can send "stop" for a clean shutdown.
+          rm -f /tmp/mc-console
+          mkfifo /tmp/mc-console
+          exec 3<>/tmp/mc-console
+
+          echo "Starting server (memory=${MAX_MEMORY}, duration=${DURATION_MINUTES}m)"
+          java -Xms1G -Xmx"${MAX_MEMORY}" -jar loader.jar nogui \
+            < /tmp/mc-console > server-console.log 2>&1 &
+          SERVER_PID=$!
+          echo "server pid: ${SERVER_PID}"
+
+          # Wait for the server to finish starting (up to 10 minutes).
+          started=0
+          for _ in $(seq 1 120); do
+            if grep -q "Done (" server-console.log 2>/dev/null; then
+              started=1
+              break
+            fi
+            if ! kill -0 "${SERVER_PID}" 2>/dev/null; then
+              echo "Server exited during startup:"
+              tail -n 100 server-console.log
+              exit 1
+            fi
+            sleep 5
+          done
+
+          if [[ "${started}" -ne 1 ]]; then
+            echo "Server did not finish starting in time:"
+            tail -n 100 server-console.log
+            echo stop >&3 || true
+            exit 1
+          fi
+
+          echo "Server is up. Keeping it online for ${DURATION_MINUTES} minutes."
+          sleep $(( DURATION_MINUTES * 60 ))
+
+          echo "Stopping server..."
+          echo stop >&3 || true
+          for _ in $(seq 1 60); do
+            kill -0 "${SERVER_PID}" 2>/dev/null || break
+            sleep 2
+          done
+          kill -0 "${SERVER_PID}" 2>/dev/null && kill "${SERVER_PID}" || true
+          wait "${SERVER_PID}" 2>/dev/null || true
+
+      - name: Show playit status
+        if: always()
+        run: |
+          ./playit-cli --socket-path "$PWD/playit-data/playitd.sock" status || true
+          echo "--- playitd.log (tail) ---"
+          tail -n 60 playit-data/playitd.log || true
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs-${{ github.run_id }}
+          path: |
+            server-console.log
+            playit-data/playitd.log
+          if-no-files-found: ignore
+          retention-days: 7
